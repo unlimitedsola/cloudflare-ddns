@@ -2,7 +2,7 @@ package main
 
 import (
 	"cloudflare-ddns/internal/ddns"
-	"cloudflare-ddns/internal/service"
+	"context"
 	"fmt"
 	"golang.org/x/sys/windows/svc/debug"
 	"golang.org/x/sys/windows/svc/eventlog"
@@ -29,11 +29,11 @@ const svcDesc = "Cloudflare DDNS Client Service"
 
 func main() {
 
-	isIntSess, err := svc.IsAnInteractiveSession()
+	isIntSess, err := svc.IsWindowsService()
 	if err != nil {
 		log.Fatalf("failed to determine if we are running in an interactive session: %v", err)
 	}
-	if !isIntSess {
+	if isIntSess {
 		runService(svcName, false)
 		return
 	}
@@ -48,13 +48,13 @@ func main() {
 		runService(svcName, true)
 		return
 	case "install":
-		err = service.InstallService(svcName, svcDesc)
+		err = installService(svcName, svcDesc)
 	case "remove":
-		err = service.RemoveService(svcName)
+		err = removeService(svcName)
 	case "start":
-		err = service.StartService(svcName)
+		err = startService(svcName)
 	case "stop":
-		err = service.ControlService(svcName, svc.Stop, svc.Stopped)
+		err = controlService(svcName, svc.Stop, svc.Stopped)
 	default:
 		usage(fmt.Sprintf("invalid command %s", cmd))
 	}
@@ -70,8 +70,8 @@ type ddnsService struct {
 	client *ddns.Client
 }
 
-func (m *ddnsService) work() {
-	hasChanged, oldIP, newIP, err := m.client.Update()
+func (m *ddnsService) work(ctx context.Context) {
+	hasChanged, oldIP, newIP, err := m.client.Update(ctx)
 	if err != nil {
 		elog.Error(1, fmt.Sprintf("failed to update record: %s", err))
 		return
@@ -86,12 +86,14 @@ func (m *ddnsService) Execute(args []string, r <-chan svc.ChangeRequest, changes
 	changes <- svc.Status{State: svc.StartPending}
 	tick := time.Tick(5 * time.Minute)
 	changes <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
-	m.work()
+	ctx := context.Background()
+	ctxWithCancel, cancelFunction := context.WithCancel(ctx)
+	m.work(ctxWithCancel)
 loop:
 	for {
 		select {
 		case <-tick:
-			m.work()
+			m.work(ctxWithCancel)
 		case c := <-r:
 			switch c.Cmd {
 			case svc.Interrogate:
@@ -103,6 +105,7 @@ loop:
 			}
 		}
 	}
+	cancelFunction()
 	changes <- svc.Status{State: svc.StopPending}
 	return
 }

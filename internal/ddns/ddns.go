@@ -2,6 +2,7 @@ package ddns
 
 import (
 	"cloudflare-ddns/internal/util"
+	"context"
 	"encoding/json"
 	"errors"
 	"github.com/cloudflare/cloudflare-go"
@@ -36,21 +37,21 @@ func New() (*Client, error) {
 	}, nil
 }
 
-func (c *Client) Update() (hasChanged bool, oldIP string, newIP string, err error) {
+func (c *Client) Update(ctx context.Context) (hasChanged bool, oldIP string, newIP string, err error) {
 	ip, err := getPublicIPv6Addr()
 	if err != nil {
 		return false, "", "", err
 	}
 	config := c.config
 	api := c.api
-	record, err := api.DNSRecord(config.ZoneId, config.DNSRecordId)
+	record, err := api.DNSRecord(ctx, config.ZoneId, config.DNSRecordId)
 	if err != nil {
 		return false, "", "", err
 	}
 	if record.Content != ip.String() {
 		old := record.Content
 		record.Content = ip.String()
-		err := api.UpdateDNSRecord(config.ZoneId, config.DNSRecordId, record)
+		err := api.UpdateDNSRecord(ctx, config.ZoneId, config.DNSRecordId, record)
 		if err != nil {
 			return false, "", "", err
 		}

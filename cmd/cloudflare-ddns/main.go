@@ -2,6 +2,7 @@ package main
 
 import (
 	"cloudflare-ddns/internal/ddns"
+	"context"
 	"log"
 )
 
@@ -10,7 +11,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to start: %s", err)
 	}
-	hasChanged, oldIP, newIP, err := client.Update()
+	ctx := context.Background()
+	hasChanged, oldIP, newIP, err := client.Update(ctx)
 	if err != nil {
 		log.Fatalf("Failed to update: %s", err)
 	}

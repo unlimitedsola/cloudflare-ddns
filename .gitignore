@@ -1,4 +1,5 @@
 .idea/
-dist/
+cmd/cloudflare-ddns/dist/
+cmd/cloudflare-ddns-service/dist/
 config.json
 *.exe

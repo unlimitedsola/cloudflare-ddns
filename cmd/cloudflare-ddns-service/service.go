@@ -1,4 +1,4 @@
-package service
+package main
 
 import (
 	"cloudflare-ddns/internal/util"
@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func InstallService(name, desc string) error {
+func installService(name, desc string) error {
 	exePath, err := util.GetExecutableAbsolutePath()
 	if err != nil {
 		return err
@@ -38,7 +38,7 @@ func InstallService(name, desc string) error {
 	return nil
 }
 
-func RemoveService(name string) error {
+func removeService(name string) error {
 	m, err := mgr.Connect()
 	if err != nil {
 		return err
@@ -60,7 +60,7 @@ func RemoveService(name string) error {
 	return nil
 }
 
-func StartService(name string) error {
+func startService(name string) error {
 	m, err := mgr.Connect()
 	if err != nil {
 		return err
@@ -78,7 +78,7 @@ func StartService(name string) error {
 	return nil
 }
 
-func ControlService(name string, c svc.Cmd, to svc.State) error {
+func controlService(name string, c svc.Cmd, to svc.State) error {
 	m, err := mgr.Connect()
 	if err != nil {
 		return err
