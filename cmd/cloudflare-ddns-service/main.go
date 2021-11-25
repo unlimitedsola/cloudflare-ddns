@@ -1,7 +1,7 @@
 package main
 
 import (
-	"cloudflare-ddns/internal/ddns"
+	"cloudflare-ddns/ddns"
 	"context"
 	"fmt"
 	"golang.org/x/sys/windows/svc/debug"
@@ -67,7 +67,7 @@ func main() {
 var elog debug.Log
 
 type ddnsService struct {
-	client *ddns.Client
+	client *ddns.DDNS
 }
 
 func (m *ddnsService) work(ctx context.Context) {

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"cloudflare-ddns/internal/ddns"
+	"cloudflare-ddns/ddns"
 	"context"
 	"log"
 )
