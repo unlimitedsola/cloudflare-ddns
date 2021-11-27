@@ -40,7 +40,7 @@ var (
 	}
 )
 
-func getSelfIpv4Addr(ctx context.Context) (string, error) {
+func getSelfIPv4Addr(ctx context.Context) (string, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", "https://icanhazip.com", nil)
 	if err != nil {
 		return "", err
@@ -60,7 +60,7 @@ func getSelfIpv4Addr(ctx context.Context) (string, error) {
 	return string(body), nil
 }
 
-func getSelfIpv6Addr(ctx context.Context) (string, error) {
+func getSelfIPv6Addr(ctx context.Context) (string, error) {
 	req, err := http.NewRequestWithContext(ctx, "GET", "https://icanhazip.com", nil)
 	if err != nil {
 		return "", err

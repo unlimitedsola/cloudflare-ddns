@@ -1,5 +1,13 @@
 {
   "api_token": "your-api-token",
-  "zone_id": "yout-zone-id",
-  "dns_record_id": "yout-dns-record-id"
+  "ipv4": true,
+  "ipv6": true,
+  "zones": [
+    {
+      "zone_id": "your-zone-id",
+      "records": [
+        "your-dns-name"
+      ]
+    }
+  ]
 }

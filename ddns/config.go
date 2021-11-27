@@ -8,9 +8,14 @@ import (
 )
 
 type Config struct {
-	APIToken    string `json:"api_token"`
-	ZoneId      string `json:"zone_id"`
-	DNSRecordId string `json:"dns_record_id"`
+	APIToken string `json:"api_token"`
+	IPv4     bool   `json:"ipv4"`
+	IPv6     bool   `json:"ipv6"`
+	Zones    []Zone `json:"zones"`
+}
+type Zone struct {
+	ZoneId  string   `json:"zone_id"`
+	Records []string `json:"records"`
 }
 
 func getConfig() (*Config, error) {

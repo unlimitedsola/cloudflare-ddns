@@ -71,13 +71,19 @@ type ddnsService struct {
 }
 
 func (m *ddnsService) work(ctx context.Context) {
-	hasChanged, oldIP, newIP, err := m.client.Update(ctx)
-	if err != nil {
-		elog.Error(1, fmt.Sprintf("failed to update record: %s", err))
-		return
+	handler := func(result ddns.UpdateResult, err error) {
+		if err != nil {
+			elog.Error(1, fmt.Sprint(err))
+			return
+		}
+		if result.Updated {
+			elog.Info(1, fmt.Sprintf("updated %s from %s to %s", result.Name, result.Previous, result.Current))
+			return
+		}
 	}
-	if hasChanged {
-		elog.Info(1, fmt.Sprintf("updated existing record %s with %s", oldIP, newIP))
+	err := m.client.Run(ctx, handler)
+	if err != nil {
+		elog.Error(1, fmt.Sprint(err))
 	}
 }
 

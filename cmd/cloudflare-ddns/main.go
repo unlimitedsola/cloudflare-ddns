@@ -12,13 +12,18 @@ func main() {
 		log.Fatalf("Failed to start: %s", err)
 	}
 	ctx := context.Background()
-	hasChanged, oldIP, newIP, err := client.Update(ctx)
-	if err != nil {
-		log.Fatalf("Failed to update: %s", err)
+	handler := func(result ddns.UpdateResult, err error) {
+		if err != nil {
+			log.Print(err)
+			return
+		}
+		if result.Updated {
+			log.Printf("Updated %s from %s to %s", result.Name, result.Previous, result.Current)
+			return
+		}
 	}
-	if hasChanged {
-		log.Printf("updated existing record %s with %s", oldIP, newIP)
-	} else {
-		log.Print("no changes detected")
+	err = client.Run(ctx, handler)
+	if err != nil {
+		log.Fatalf("Failed to start: %s", err)
 	}
 }
