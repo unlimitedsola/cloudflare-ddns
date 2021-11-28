@@ -6,24 +6,22 @@ import (
 	"log"
 )
 
-var handler = &ddnsHandler{}
+var handler = &ddns.Handler{
+	OnZoneError: func(zone string, err error) {
+		log.Printf("Failed to gather zone info for %s: %s", zone, err)
+	},
 
-type ddnsHandler struct{}
+	OnError: func(name string, err error) {
+		log.Printf("Failed to update record for %s: %s", name, err)
+	},
 
-func (h *ddnsHandler) OnZoneError(zone string, err error) {
-	log.Printf("Failed to gather zone info for %s: %s", zone, err)
-}
+	OnUpdate: func(name string, recordType string, previous string, current string) {
+		log.Printf("Updated %s record %s from %s to %s", recordType, name, previous, current)
+	},
 
-func (h *ddnsHandler) OnError(name string, err error) {
-	log.Printf("Failed to update record for %s: %s", name, err)
-}
-
-func (h *ddnsHandler) OnUpdate(name string, recordType string, previous string, current string) {
-	log.Printf("Updated %s record %s from %s to %s", recordType, name, previous, current)
-}
-
-func (h *ddnsHandler) OnCreate(name string, recordType string, current string) {
-	log.Printf("Created %s record %s pointed to %s", recordType, name, current)
+	OnCreate: func(name string, recordType string, current string) {
+		log.Printf("Created %s record %s pointed to %s", recordType, name, current)
+	},
 }
 
 func main() {

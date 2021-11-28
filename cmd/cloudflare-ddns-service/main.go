@@ -69,24 +69,19 @@ type ddnsService struct {
 	client *ddns.DDNS
 }
 
-var handler = &ddnsHandler{}
-
-type ddnsHandler struct{}
-
-func (h *ddnsHandler) OnZoneError(zone string, err error) {
-	elog.Error(1, fmt.Sprintf("Failed to gather zone info for %s: %s", zone, err))
-}
-
-func (h *ddnsHandler) OnError(name string, err error) {
-	elog.Error(1, fmt.Sprintf("Failed to update record for %s: %s", name, err))
-}
-
-func (h *ddnsHandler) OnUpdate(name string, recordType string, previous string, current string) {
-	elog.Info(1, fmt.Sprintf("Updated %s record %s from %s to %s", recordType, name, previous, current))
-}
-
-func (h *ddnsHandler) OnCreate(name string, recordType string, current string) {
-	elog.Info(1, fmt.Sprintf("Created %s record %s pointed to %s", recordType, name, current))
+var handler = &ddns.Handler{
+	OnZoneError: func(zone string, err error) {
+		elog.Error(1, fmt.Sprintf("Failed to gather zone info for %s: %s", zone, err))
+	},
+	OnError: func(name string, err error) {
+		elog.Error(1, fmt.Sprintf("Failed to update record for %s: %s", name, err))
+	},
+	OnUpdate: func(name string, recordType string, previous string, current string) {
+		elog.Info(1, fmt.Sprintf("Updated %s record %s from %s to %s", recordType, name, previous, current))
+	},
+	OnCreate: func(name string, recordType string, current string) {
+		elog.Info(1, fmt.Sprintf("Created %s record %s pointed to %s", recordType, name, current))
+	},
 }
 
 func (m *ddnsService) work(ctx context.Context) {

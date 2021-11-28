@@ -29,14 +29,14 @@ func createAPIClient(config *Config) (api *cloudflare.API, err error) {
 	return cloudflare.NewWithAPIToken(config.APIToken)
 }
 
-type Handler interface {
-	OnZoneError(zone string, err error)
-	OnError(name string, err error)
-	OnCreate(name string, recordType string, current string)
-	OnUpdate(name string, recordType string, previous string, current string)
+type Handler struct {
+	OnZoneError func(zone string, err error)
+	OnError     func(name string, err error)
+	OnCreate    func(name string, recordType string, current string)
+	OnUpdate    func(name string, recordType string, previous string, current string)
 }
 
-func (d *DDNS) Run(ctx context.Context, handler Handler) error {
+func (d *DDNS) Run(ctx context.Context, handler *Handler) error {
 	if d.config.IPv4 {
 		ipv4, err := getSelfIPv4Addr(ctx)
 		if err != nil {
@@ -58,7 +58,7 @@ func (d *DDNS) Run(ctx context.Context, handler Handler) error {
 	return nil
 }
 
-func (d *DDNS) updateZone(ctx context.Context, zone Zone, recordType string, ip string, handler Handler) {
+func (d *DDNS) updateZone(ctx context.Context, zone Zone, recordType string, ip string, handler *Handler) {
 	filter := cloudflare.DNSRecord{Type: recordType}
 	records, err := d.api.DNSRecords(ctx, zone.ZoneId, filter)
 	if err != nil {
