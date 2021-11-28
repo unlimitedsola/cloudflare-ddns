@@ -28,7 +28,6 @@ const svcName = "CloudflareDDNSClient"
 const svcDesc = "Cloudflare DDNS Client Service"
 
 func main() {
-
 	isIntSess, err := svc.IsWindowsService()
 	if err != nil {
 		log.Fatalf("failed to determine if we are running in an interactive session: %v", err)
@@ -70,17 +69,27 @@ type ddnsService struct {
 	client *ddns.DDNS
 }
 
+var handler = &ddnsHandler{}
+
+type ddnsHandler struct{}
+
+func (h *ddnsHandler) OnZoneError(zone string, err error) {
+	elog.Error(1, fmt.Sprintf("Failed to gather zone info for %s: %s", zone, err))
+}
+
+func (h *ddnsHandler) OnError(name string, err error) {
+	elog.Error(1, fmt.Sprintf("Failed to update record for %s: %s", name, err))
+}
+
+func (h *ddnsHandler) OnUpdate(name string, recordType string, previous string, current string) {
+	elog.Info(1, fmt.Sprintf("Updated %s record %s from %s to %s", recordType, name, previous, current))
+}
+
+func (h *ddnsHandler) OnCreate(name string, recordType string, current string) {
+	elog.Info(1, fmt.Sprintf("Created %s record %s pointed to %s", recordType, name, current))
+}
+
 func (m *ddnsService) work(ctx context.Context) {
-	handler := func(result ddns.UpdateResult, err error) {
-		if err != nil {
-			elog.Error(1, fmt.Sprint(err))
-			return
-		}
-		if result.Updated {
-			elog.Info(1, fmt.Sprintf("updated %s from %s to %s", result.Name, result.Previous, result.Current))
-			return
-		}
-	}
 	err := m.client.Run(ctx, handler)
 	if err != nil {
 		elog.Error(1, fmt.Sprint(err))

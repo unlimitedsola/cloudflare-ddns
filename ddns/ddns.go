@@ -29,14 +29,12 @@ func createAPIClient(config *Config) (api *cloudflare.API, err error) {
 	return cloudflare.NewWithAPIToken(config.APIToken)
 }
 
-type UpdateResult struct {
-	Name     string
-	Updated  bool
-	Previous string
-	Current  string
+type Handler interface {
+	OnZoneError(zone string, err error)
+	OnError(name string, err error)
+	OnCreate(name string, recordType string, current string)
+	OnUpdate(name string, recordType string, previous string, current string)
 }
-
-type Handler func(res UpdateResult, err error)
 
 func (d *DDNS) Run(ctx context.Context, handler Handler) error {
 	if d.config.IPv4 {
@@ -64,7 +62,7 @@ func (d *DDNS) updateZone(ctx context.Context, zone Zone, recordType string, ip 
 	filter := cloudflare.DNSRecord{Type: recordType}
 	records, err := d.api.DNSRecords(ctx, zone.ZoneId, filter)
 	if err != nil {
-		handler(UpdateResult{}, err)
+		handler.OnZoneError(zone.ZoneId, err)
 		return
 	}
 main:
@@ -74,17 +72,16 @@ main:
 				continue
 			}
 			if record.Content == ip {
-				handler(UpdateResult{name, false, record.Content, ip}, nil)
 				continue main
 			}
 			old := record.Content
 			record.Content = ip
 			err := d.api.UpdateDNSRecord(ctx, zone.ZoneId, record.ID, record)
 			if err != nil {
-				handler(UpdateResult{}, err)
+				handler.OnError(name, err)
 				continue main
 			}
-			handler(UpdateResult{name, true, old, record.Content}, nil)
+			handler.OnUpdate(name, recordType, old, record.Content)
 			continue main
 		}
 		newRecord := cloudflare.DNSRecord{
@@ -96,10 +93,10 @@ main:
 		}
 		_, err := d.api.CreateDNSRecord(ctx, zone.ZoneId, newRecord)
 		if err != nil {
-			handler(UpdateResult{}, err)
+			handler.OnError(name, err)
 			continue
 		}
-		handler(UpdateResult{name, true, "", ip}, nil)
+		handler.OnCreate(name, recordType, ip)
 	}
 }
 
